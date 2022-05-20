@@ -1,299 +1,298 @@
+Error.stackTraceLimit = 100;
 
- Error.stackTraceLimit = 100;
-
- const networks = {
-     mainnet: {
-         contractAddress: '0x6b6feb517ab6cc58d509734485fa3b625f7c8b44',
-         networkName: 'Ethereum Mainnet',
-         etherScanUrl: 'https://etherscan.io/tx/',
-         openSeaUrl: 'https://opensea.io/account',
-         networkParams: {
-             chainId: '0x1'
-         },
-     },  
-     rinkeby: {
-         contractAddress: '0x9e3570eD9140554CD9e7B1Aa795C307cFf8f8343',
-         networkName: 'Ethereum Mainnet',
-         etherScanUrl: 'https://rinkeby.etherscan.io/tx/',
-         openSeaUrl: 'https://testnets.opensea.io/account',
-         networkParams: {
-             chainId: '0x4'
-         },
-     },
- }
-
-
- const config = {
-     ...networks.rinkeby,
-     contractABI: [ 
-         'function publicsale() public view returns (bool)',
-         'function presale() public view returns (bool)',
-         'function paused() public view returns (bool)',
-         'function whitelisted(address addr) public view returns (bool)',
-         'function safeMint(uint256 minttimes) external payable',
-         'function FEE() public view returns (uint256)',
-         'function FEEpresales() public view returns (uint256)',
-         'function balanceOf(address owner) external view returns (uint256 balance)'
-     ],
-     totalForSale: 7777
- }
-
- let targetModalSelector = ".mint-form-container";
-
- let walletProvider = null;
- let walletConnector = null;
- let chosenWallet = "";
-
- function wcSetup() {
-     var WalletConnect = window.WalletConnect.default;
-     var WalletConnectQRCodeModal = window.WalletConnectQRCodeModal.default;
-
-     // Display all
-     var displayData = function () {
-         console.log(walletConnector.accounts, walletConnector.chainId);
-     }
+const networks = {
+    mainnet: {
+        contractAddress: '0x6b6feb517ab6cc58d509734485fa3b625f7c8b44',
+        networkName: 'Ethereum Mainnet',
+        etherScanUrl: 'https://etherscan.io/tx/',
+        openSeaUrl: 'https://opensea.io/account',
+        networkParams: {
+            chainId: '0x1'
+        },
+    },
+    rinkeby: {
+        contractAddress: '0x9e3570eD9140554CD9e7B1Aa795C307cFf8f8343',
+        networkName: 'Ethereum Mainnet',
+        etherScanUrl: 'https://rinkeby.etherscan.io/tx/',
+        openSeaUrl: 'https://testnets.opensea.io/account',
+        networkParams: {
+            chainId: '0x4'
+        },
+    },
+}
 
 
-     window.localStorage.removeItem('walletconnect');
-     // Get an instance of the WalletConnect connector
-     walletConnector = new WalletConnect({
-         bridge: 'https://bridge.walletconnect.org',
-         chainId: config.networkParams.chainId,
-     });
+const config = {
+    ...networks.rinkeby,
+    contractABI: [
+        'function publicsale() public view returns (bool)',
+        'function presale() public view returns (bool)',
+        'function paused() public view returns (bool)',
+        'function whitelisted(address addr) public view returns (bool)',
+        'function safeMint(uint256 minttimes) external payable',
+        'function FEE() public view returns (uint256)',
+        'function FEEpresales() public view returns (uint256)',
+        'function balanceOf(address owner) external view returns (uint256 balance)'
+    ],
+    totalForSale: 7777
+}
 
-     // Display data if connected
-     if (walletConnector.connected) {
-         displayData();
-     }
+let targetModalSelector = ".mint-form-container";
 
-     // When the connect/disconnect button is clicked
-     window.connect = async function () {
-         if (walletConnector.connected) {
-             return true;
-         }
-         await walletConnector.createSession();
-         var uri = walletConnector.uri;
-         WalletConnectQRCodeModal.open(uri, () => {
-             console.log('QR Code Modal closed');
-             if (window.wcConnectPromiseResolve) {
-                 window.wcConnectPromiseResolve(false);
-             }
-         });
-     }
+let walletProvider = null;
+let walletConnector = null;
+let chosenWallet = "";
+
+function wcSetup() {
+    var WalletConnect = window.WalletConnect.default;
+    var WalletConnectQRCodeModal = window.WalletConnectQRCodeModal.default;
+
+    // Display all
+    var displayData = function() {
+        console.log(walletConnector.accounts, walletConnector.chainId);
+    }
 
 
+    window.localStorage.removeItem('walletconnect');
+    // Get an instance of the WalletConnect connector
+    walletConnector = new WalletConnect({
+        bridge: 'https://bridge.walletconnect.org',
+        chainId: config.networkParams.chainId,
+    });
 
-     // Subscribe to connection events: connect, session_update and disconnect
-     walletConnector.on('connect', function (error, payload) {
-         if (error) {
-             logerror(error);
-             window.wcConnectPromiseResolve(false);
-         } else {
-             // Close QR Code Modal
-             window.wcConnectPromiseResolve(true);
-             WalletConnectQRCodeModal.close();
-         }
-     });
+    // Display data if connected
+    if (walletConnector.connected) {
+        displayData();
+    }
 
-     walletConnector.on('session_update', function (error, payload) {
-         if (error) {
-             logerror(error);
-         } else if (walletConnector.connected) {
-             // data may be changed
-             displayData();
-         }
+    // When the connect/disconnect button is clicked
+    window.connect = async function() {
+        if (walletConnector.connected) {
+            return true;
+        }
+        await walletConnector.createSession();
+        var uri = walletConnector.uri;
+        WalletConnectQRCodeModal.open(uri, () => {
+            console.log('QR Code Modal closed');
+            if (window.wcConnectPromiseResolve) {
+                window.wcConnectPromiseResolve(false);
+            }
+        });
+    }
 
-     });
 
-     walletConnector.on('disconnect', function (error, payload) {
-         if (error) {
-             logerror(error);
-         } else {
-             // remove all the data
-         }
-     });
- }
 
- function setupModals() {
-     var closeButtons = document.querySelectorAll('.nft-js-modal-close, .nft-js-modal-overlay');
+    // Subscribe to connection events: connect, session_update and disconnect
+    walletConnector.on('connect', function(error, payload) {
+        if (error) {
+            logerror(error);
+            window.wcConnectPromiseResolve(false);
+        } else {
+            // Close QR Code Modal
+            window.wcConnectPromiseResolve(true);
+            WalletConnectQRCodeModal.close();
+        }
+    });
 
-     for (var i = 0; i < closeButtons.length; i++) {
-         const b = closeButtons[i];
-         b.onclick = function () {
-             b.closest('.nft-modal').classList.remove('open');
-         }
-     }
- }
+    walletConnector.on('session_update', function(error, payload) {
+        if (error) {
+            logerror(error);
+        } else if (walletConnector.connected) {
+            // data may be changed
+            displayData();
+        }
 
- function setMintAmount(amount) {
-         const mintAmountText = document.querySelector('[data-id="nft-mint-amount-text"]');
+    });
 
-         if (amount > contractState.maxTokensAllowed) {
-             amount = contractState.maxTokensAllowed;
-         }
+    walletConnector.on('disconnect', function(error, payload) {
+        if (error) {
+            logerror(error);
+        } else {
+            // remove all the data
+        }
+    });
+}
 
-         if (amount < 1) {
-             amount = 1;
-         }
+function setupModals() {
+    var closeButtons = document.querySelectorAll('.nft-js-modal-close, .nft-js-modal-overlay');
 
-         mintAmountText.innerHTML = amount;
-     }
+    for (var i = 0; i < closeButtons.length; i++) {
+        const b = closeButtons[i];
+        b.onclick = function() {
+            b.closest('.nft-modal').classList.remove('open');
+        }
+    }
+}
 
- async function verifyWalletConnect() {
-     return new Promise(resolve => {
-         window.connect();
-         window.wcConnectPromiseResolve = (v) => {
-             console.log('wcConnectPromiseResolve called');
-             resolve(v);
-             window.wcConnectPromiseResolve = undefined;
-         };
-     });
- }
+function setMintAmount(amount) {
+    const mintAmountText = document.querySelector('[data-id="nft-mint-amount-text"]');
 
- async function verifyMetamask() {
-     if (!chosenWallet) {
-         // todo guess wallet if connected already
-         return false;
-     }
+    if (amount > contractState.maxTokensAllowed) {
+        amount = contractState.maxTokensAllowed;
+    }
 
-     const walletName = chosenWallet == 'metamask' ? 'MetaMask' : 'Coinbase Wallet';
+    if (amount < 1) {
+        amount = 1;
+    }
 
-     if (!window.ethereum) {
-         alert(`Please install ${walletName} to interact with this feature`);
-         return;
-     }
+    mintAmountText.innerHTML = amount;
+}
 
-     if (chosenWallet == 'metamask') {
-         walletProvider = window.ethereum.providers ? window.ethereum.providers.find((provider) => provider.isMetaMask) : window.ethereum;
-     } else if (chosenWallet == 'coinbase') {
-         walletProvider = window.ethereum.providers ? window.ethereum.providers.find((provider) => !provider.isMetaMask) : window.ethereum;
-     } else {
-         throw new Error('Unknown wallet provider');
-     }
+async function verifyWalletConnect() {
+    return new Promise(resolve => {
+        window.connect();
+        window.wcConnectPromiseResolve = (v) => {
+            console.log('wcConnectPromiseResolve called');
+            resolve(v);
+            window.wcConnectPromiseResolve = undefined;
+        };
+    });
+}
 
-     let accounts;
-     try {
-         if (getChainId() != config.networkParams.chainId) {
-             try { 
-                 await walletProvider.request({
-                     method: 'wallet_switchEthereumChain',
-                     params: [{
-                         chainId: config.networkParams.chainId
-                     }],
-                 });
-             } catch {
-                 await window.ethereum.request({ method: 'wallet_addEthereumChain', params: [config.networkParams] });
-             }
-             await new Promise(resolve => setTimeout(resolve, 750));
-         }
+async function verifyMetamask() {
+    if (!chosenWallet) {
+        // todo guess wallet if connected already
+        return false;
+    }
 
-         const params = [config.networkParams];
-         accounts = await walletProvider.request({
-             method: 'eth_requestAccounts'
-         });
+    const walletName = chosenWallet == 'metamask' ? 'MetaMask' : 'Coinbase Wallet';
 
-         if (getChainId() != config.networkParams.chainId) {
-             console.log(`Please switch ${walletName} network to ${config.networkName}`);
-             return;
-         }
-     } catch (error) {
-         if (error.code == -32002) {
-             alert(`Please open your ${walletName} and select an account`);
-             return;
-         } else if (error.code == 4001) {
-             console.log(`Transacrion rejected`);
-             return;
-         } else if (error.code) {
-             throw error;
-         }
-     }
-     return accounts[0];
- }
+    if (!window.ethereum) {
+        alert(`Please install ${walletName} to interact with this feature`);
+        return;
+    }
 
- async function verifyWalletConnection() {
-     if (chosenWallet === 'walletconnect') {
-         return verifyWalletConnect();
-     } else {
-         return verifyMetamask();
-     }
- }
+    if (chosenWallet == 'metamask') {
+        walletProvider = window.ethereum.providers ? window.ethereum.providers.find((provider) => provider.isMetaMask) : window.ethereum;
+    } else if (chosenWallet == 'coinbase') {
+        walletProvider = window.ethereum.providers ? window.ethereum.providers.find((provider) => !provider.isMetaMask) : window.ethereum;
+    } else {
+        throw new Error('Unknown wallet provider');
+    }
 
- async function connectButtonOnClick() {
-     chosenWallet = await chooseWallet();
+    let accounts;
+    try {
+        if (getChainId() != config.networkParams.chainId) {
+            try {
+                await walletProvider.request({
+                    method: 'wallet_switchEthereumChain',
+                    params: [{
+                        chainId: config.networkParams.chainId
+                    }],
+                });
+            } catch {
+                await window.ethereum.request({ method: 'wallet_addEthereumChain', params: [config.networkParams] });
+            }
+            await new Promise(resolve => setTimeout(resolve, 750));
+        }
 
-     if (!await verifyWalletConnection()) {
-         return;
-     }
-     console.log("Works");
-     contract = new ethers.Contract(config.contractAddress, config.contractABI, getProvider());
-     await fetchContractState();
-     await updateContractState();
- }
+        const params = [config.networkParams];
+        accounts = await walletProvider.request({
+            method: 'eth_requestAccounts'
+        });
 
- function getMintAmount() {
-     const mintAmountText = document.querySelector('[data-id="nft-mint-amount-text"]');
-     return parseInt(mintAmountText.innerHTML);
- }
+        if (getChainId() != config.networkParams.chainId) {
+            console.log(`Please switch ${walletName} network to ${config.networkName}`);
+            return;
+        }
+    } catch (error) {
+        if (error.code == -32002) {
+            alert(`Please open your ${walletName} and select an account`);
+            return;
+        } else if (error.code == 4001) {
+            console.log(`Transacrion rejected`);
+            return;
+        } else if (error.code) {
+            throw error;
+        }
+    }
+    return accounts[0];
+}
 
- let contractState = null;
+async function verifyWalletConnection() {
+    if (chosenWallet === 'walletconnect') {
+        return verifyWalletConnect();
+    } else {
+        return verifyMetamask();
+    }
+}
 
- async function fetchContractState() {
-     displayLoadingModal('Fetching contract info');
-     const contract = new ethers.Contract(config.contractAddress, config.contractABI, getProvider());
+async function connectButtonOnClick() {
+    chosenWallet = await chooseWallet();
 
-     let currentStage;
-     if (await contract.paused()) currentStage = ethers.BigNumber.from(0);
-     else if (await contract.presale()) currentStage = ethers.BigNumber.from(1);
-     else if (await contract.publicsale()) currentStage = ethers.BigNumber.from(2);
-     else currentStage = ethers.BigNumber.from(0);
+    if (!await verifyWalletConnection()) {
+        return;
+    }
+    console.log("Works");
+    contract = new ethers.Contract(config.contractAddress, config.contractABI, getProvider());
+    await fetchContractState();
+    await updateContractState();
+}
 
-     let tokenPrice = currentStage.eq(1) ? await contract.FEEpresales() : await contract.FEE();
-     let maxTokensAllowed = ethers.BigNumber.from(5); // TODO fix this
-     let soldAmount = ethers.BigNumber.from(0); // TODO fix this
-     let purchasedAmount = ethers.BigNumber.from(0); // TODO fix this
-     let presaleTotalLimit = ethers.BigNumber.from(99999); // TODO fix this
+function getMintAmount() {
+    const mintAmountText = document.querySelector('[data-id="nft-mint-amount-text"]');
+    return parseInt(mintAmountText.innerHTML);
+}
 
-     let isWhitelisted = await contract.whitelisted(getAddress());
+let contractState = null;
 
-     contractState = {
-         currentStage,
-         maxTokensAllowed,
-         tokenPrice,
-         soldAmount,
-         purchasedAmount,
-         presaleTotalLimit,
-         isWhitelisted
-     };
-     closeLoadingModal();
-     // $('[data-id="nft-mint-minted-so-far"]').text(`${contractState.soldAmount.toString()}/5000 minted so far`);
- }
+async function fetchContractState() {
+    displayLoadingModal('Fetching contract info');
+    const contract = new ethers.Contract(config.contractAddress, config.contractABI, getProvider());
 
- function displayMessage(context, message) {
-     hideMintWidget();
-     if (context == 'mint') {
-         document.querySelector('[data-id="nft-connect-wallet-button-center"]').parentElement.style.display = 'none';
-         // document.querySelector('[data-id="nft-connect-wallet-button-center-text"]').style.display = 'none';
-         document.querySelector('[data-id="nft-message-box"]').style.display = 'table-cell';
-         document.querySelector('[data-id="nft-message-box"]').innerHTML = message;
-     } else {
-         document.querySelector('[data-id="nft-connect-wallet-button-center"]').parentElement.style.display = 'none';
-         // document.querySelector('[data-id="nft-connect-wallet-button-center-text"]').style.display = 'none';
-     }
-     return false;
- }
+    let currentStage;
+    if (await contract.paused()) currentStage = ethers.BigNumber.from(0);
+    else if (await contract.presale()) currentStage = ethers.BigNumber.from(1);
+    else if (await contract.publicsale()) currentStage = ethers.BigNumber.from(2);
+    else currentStage = ethers.BigNumber.from(0);
 
- function closeLoadingModal() {
-     var modalWindow = document.querySelector('.nft-modal.loading-modal');
-     modalWindow.classList ? modalWindow.classList.remove('open') : modalWindow.className = modalWindow.className.replace(new RegExp('(^|\\b)' + 'open'.split(' ').join('|') + '(\\b|$)', 'gi'), ' ');
- }
+    let tokenPrice = currentStage.eq(1) ? await contract.FEEpresales() : await contract.FEE();
+    let maxTokensAllowed = ethers.BigNumber.from(5); // TODO fix this
+    let soldAmount = ethers.BigNumber.from(0); // TODO fix this
+    let purchasedAmount = ethers.BigNumber.from(0); // TODO fix this
+    let presaleTotalLimit = ethers.BigNumber.from(99999); // TODO fix this
 
- function displayLoadingModal(msg, { showLoading = true, showX = true } = {}) {
-     const modal = document.querySelector('.nft-modal.loading-modal');
-     modal.classList.add('open');
+    let isWhitelisted = await contract.whitelisted(getAddress());
 
-     const modalContainer = modal.querySelector('.nft-modal-container');
+    contractState = {
+        currentStage,
+        maxTokensAllowed,
+        tokenPrice,
+        soldAmount,
+        purchasedAmount,
+        presaleTotalLimit,
+        isWhitelisted
+    };
+    closeLoadingModal();
+    // $('[data-id="nft-mint-minted-so-far"]').text(`${contractState.soldAmount.toString()}/5000 minted so far`);
+}
 
-     modalContainer.innerHTML = `
+function displayMessage(context, message) {
+    hideMintWidget();
+    if (context == 'mint') {
+        document.querySelector('[data-id="nft-connect-wallet-button-center"]').parentElement.style.display = 'none';
+        // document.querySelector('[data-id="nft-connect-wallet-button-center-text"]').style.display = 'none';
+        document.querySelector('[data-id="nft-message-box"]').style.display = 'table-cell';
+        document.querySelector('[data-id="nft-message-box"]').innerHTML = message;
+    } else {
+        document.querySelector('[data-id="nft-connect-wallet-button-center"]').parentElement.style.display = 'none';
+        // document.querySelector('[data-id="nft-connect-wallet-button-center-text"]').style.display = 'none';
+    }
+    return false;
+}
+
+function closeLoadingModal() {
+    var modalWindow = document.querySelector('.nft-modal.loading-modal');
+    modalWindow.classList ? modalWindow.classList.remove('open') : modalWindow.className = modalWindow.className.replace(new RegExp('(^|\\b)' + 'open'.split(' ').join('|') + '(\\b|$)', 'gi'), ' ');
+}
+
+function displayLoadingModal(msg, { showLoading = true, showX = true } = {}) {
+    const modal = document.querySelector('.nft-modal.loading-modal');
+    modal.classList.add('open');
+
+    const modalContainer = modal.querySelector('.nft-modal-container');
+
+    modalContainer.innerHTML = `
  ${showX ? '<div class="nft-modal-close nft-js-modal-close">✕</div>' : ''}
    <div class="nft-modal-content">
      ${msg}
