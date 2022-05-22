@@ -543,6 +543,7 @@ function displayLoadingModal(msg, { showLoading = true, showX = true } = {}) {
 
  document.addEventListener("DOMContentLoaded", function () {
      wcSetup();
+     let mintContainer = document.querySelector(targetModalSelector);
      document.body.appendChild(elFromHtml`
          <div class="nft-modal choose-wallet-modal">
              <div class="nft-modal-overlay nft-js-modal-overlay"></div>
@@ -556,6 +557,19 @@ function displayLoadingModal(msg, { showLoading = true, showX = true } = {}) {
              <div class="nft-modal-container"></div>
          </div>
      `);
+
+     document.body.appendChild(elFromHtml`
+        <div class="nft-modal nft-message-box">
+            <div class="nft-modal-overlay nft-js-modal-overlay"></div>
+            <div class="nft-modal-container"></div>
+        </div>
+    `);
+
+     mintContainer.appendChild(elFromHtml`
+        <div class="mint-content">
+        </div>
+    `);
+
 
      var style = document.createElement( 'style' )
      style.innerHTML = 'button { width: 100%; }'
