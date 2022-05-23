@@ -2,6 +2,38 @@
     max-width: 400px !important;
 }
 
+.mint-form-container {
+    display: -webkit-flexbox;
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-align: center;
+    -ms-flex-align: center;
+    -webkit-align-items: center;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+
+.connect-wallet-btn {
+    font-family: 'Monument Extended', sans-serif;
+    color: #fff;
+    font-size: 24px;
+    line-height: 30px;
+    font-weight: 700;
+    text-align: center;
+    text-transform: uppercase;
+    background-color: #6c3ba9;
+    border-radius: 5px;
+    padding: 10px;
+    cursor: pointer;
+}
+
+.connect-wallet-btn:hover {
+    background-color: #572c8d;
+    color: gray;
+}
+
 .nft-input-el {
     width: calc(100% - 12px);
     height: calc(100% - 12px);
@@ -50,25 +82,48 @@
     display: inline
 }
 
-#nft-mint-amount-input {
+#nft-mint-amount-text {
     display: block;
     margin: auto;
-    width: 300px;
-    max-width: 100%;
-    height: 45px;
+    width: 100%;
+    font-family: 'Monument Extended', sans-serif;
     font-size: 35px;
+    line-height: 45px;
+    font-weight: 700;
     text-align: center;
-    margin-bottom: 20px;
-    /* border-radius: 5px; */
+    text-transform: uppercase;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    background: white;
+    color: black;
+}
+
+#nft-mint-amount-text::selection {
+    background: white;
+    color: black;
 }
 
 #nft-mint-amount-input-container {
     margin: 0 auto;
-    width: 310px;
+    width: 50%;
     position: relative;
 }
 
-#nft-mint-amount-input-arrow-left {
+#nft-mint-button {
+    font-family: 'Monument Extended', sans-serif;
+    color: #fff;
+    font-size: 24px;
+    line-height: 30px;
+    font-weight: 700;
+    text-align: center;
+    text-transform: uppercase;
+    background-color: #6c3ba9;
+    border-radius: 5px;
+    padding: 10px;
+    cursor: pointer;
+}
+
+#nft-mint-amount-minus {
     transform: rotate(90deg);
     height: 20px;
     position: absolute;
@@ -78,7 +133,7 @@
     cursor: pointer;
 }
 
-#nft-mint-amount-input-arrow-right {
+#nft-mint-amount-plus {
     transform: rotate(-90deg);
     height: 20px;
     position: absolute;
@@ -103,6 +158,10 @@
 .mint-content {
     width: 100%;
     height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
 .nft-modal {

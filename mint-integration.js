@@ -11,7 +11,7 @@ const networks = {
         },
     },
     rinkeby: {
-        contractAddress: '0x9e3570eD9140554CD9e7B1Aa795C307cFf8f8343',
+        contractAddress: '0x8eB3be9d0E946236be87e72260D55b7Ee1606304',
         networkName: 'Ethereum Mainnet',
         etherScanUrl: 'https://rinkeby.etherscan.io/tx/',
         openSeaUrl: 'https://testnets.opensea.io/account',
@@ -32,9 +32,13 @@ const config = {
         'function safeMint(uint256 minttimes) external payable',
         'function FEE() public view returns (uint256)',
         'function FEEpresales() public view returns (uint256)',
-        'function balanceOf(address owner) external view returns (uint256 balance)'
+        'function balanceOf(address owner) external view returns (uint256 balance)',
+        'function getCounter() external view returns (uint256)',
+        'function MAX_TOKENS_PRESALE() public view returns (uint256)',
+        'function MAX_TOKENS() public view returns (uint256)',
+        'function MAXNFTperTX() public view returns (uint256)',
+        'function MAXNFTperADDR() public view returns (uint256)'
     ],
-    totalForSale: 7777
 }
 
 let targetModalSelector = ".mint-form-container";
@@ -125,7 +129,7 @@ function setupModals() {
 }
 
 function setMintAmount(amount) {
-    const mintAmountText = document.querySelector('[data-id="nft-mint-amount-text"]');
+    const mintAmountText = document.querySelector('#nft-mint-amount-text');
 
     if (amount > contractState.maxTokensAllowed) {
         amount = contractState.maxTokensAllowed;
@@ -230,7 +234,7 @@ async function connectButtonOnClick() {
 }
 
 function getMintAmount() {
-    const mintAmountText = document.querySelector('[data-id="nft-mint-amount-text"]');
+    const mintAmountText = document.querySelector('#nft-mint-amount-text');
     return parseInt(mintAmountText.innerHTML);
 }
 
@@ -242,26 +246,37 @@ async function fetchContractState() {
 
     let currentStage;
     if (await contract.paused()) currentStage = ethers.BigNumber.from(0);
-    else if (await contract.presale()) currentStage = ethers.BigNumber.from(1);
     else if (await contract.publicsale()) currentStage = ethers.BigNumber.from(2);
+    else if (await contract.presale()) currentStage = ethers.BigNumber.from(1);
     else currentStage = ethers.BigNumber.from(0);
 
     let tokenPrice = currentStage.eq(1) ? await contract.FEEpresales() : await contract.FEE();
-    let maxTokensAllowed = ethers.BigNumber.from(5); // TODO fix this
-    let soldAmount = ethers.BigNumber.from(0); // TODO fix this
-    let purchasedAmount = ethers.BigNumber.from(0); // TODO fix this
-    let presaleTotalLimit = ethers.BigNumber.from(99999); // TODO fix this
+    let maxTokensAllowed = await contract.MAXNFTperTX(); // TODO fix this
+    let maxTokensPerAddrs = await contract.MAXNFTperADDR();
+    let soldAmount = await contract.getCounter(); // TODO fix this
+    let purchasedAmount = await contract.balanceOf(getAddress()); // TODO fix this
+    let presaleTotalLimit = await contract.MAX_TOKENS_PRESALE(); // TODO fix this
+    let totalForSale = await contract.MAX_TOKENS();
+
+    if (maxTokensAllowed.gt(maxTokensPerAddrs.sub(purchasedAmount))) {
+        maxTokensAllowed = maxTokensPerAddrs.sub(purchasedAmount);
+        if (maxTokensAllowed.lt(0)) {
+            maxTokensAllowed = ethers.BigNumber.from(0);
+        }
+    }
 
     let isWhitelisted = await contract.whitelisted(getAddress());
 
     contractState = {
         currentStage,
         maxTokensAllowed,
+        maxTokensPerAddrs,
         tokenPrice,
         soldAmount,
         purchasedAmount,
         presaleTotalLimit,
-        isWhitelisted
+        isWhitelisted,
+        totalForSale
     };
     closeLoadingModal();
     // $('[data-id="nft-mint-minted-so-far"]').text(`${contractState.soldAmount.toString()}/5000 minted so far`);
@@ -270,13 +285,16 @@ async function fetchContractState() {
 function displayMessage(context, message) {
     hideMintWidget();
     if (context == 'mint') {
-        document.querySelector('[data-id="nft-connect-wallet-button-center"]').parentElement.style.display = 'none';
-        // document.querySelector('[data-id="nft-connect-wallet-button-center-text"]').style.display = 'none';
-        document.querySelector('[data-id="nft-message-box"]').style.display = 'table-cell';
-        document.querySelector('[data-id="nft-message-box"]').innerHTML = message;
-    } else {
-        document.querySelector('[data-id="nft-connect-wallet-button-center"]').parentElement.style.display = 'none';
-        // document.querySelector('[data-id="nft-connect-wallet-button-center-text"]').style.display = 'none';
+        const modal = document.querySelector('.nft-message-box');
+        modal.classList.add('open');
+        const modalContainer = modal.querySelector('.nft-modal-container');
+        modalContainer.innerHTML = `
+         <div class="nft-modal-close nft-js-modal-close">✕</div>
+         <div class="nft-modal-content">
+            ${message}
+        </div>
+        `;
+        setupModals();
     }
     return false;
 }
@@ -376,7 +394,7 @@ function displayLoadingModal(msg, { showLoading = true, showX = true } = {}) {
              return displayMessage('mint', 'Pre-sale sold out. Please wait for the public sale.');
          }
 
-         if (contractState.soldAmount == config.totalForSale) {
+         if (contractState.soldAmount == contract.totalForSale) {
              return displayMessage('mint', 'Sold out.');
          }
 
@@ -397,13 +415,13 @@ function displayLoadingModal(msg, { showLoading = true, showX = true } = {}) {
      if (!await checkIfMintingAvailable()) {
          return;
      }
-
      setMintAmount(1);
+     showMintWidget();
 
      let transacting = false;
 
      // remove event listeners...
-     var old_element = document.querySelector('[data-id="nft-mint-button"]');
+     var old_element = document.querySelector('#nft-mint-button');
      var new_element = old_element.cloneNode(true);
      old_element.parentNode.replaceChild(new_element, old_element);
      new_element.addEventListener('click', async (ev) => {
@@ -425,19 +443,23 @@ function displayLoadingModal(msg, { showLoading = true, showX = true } = {}) {
              transacting = false;
          }
      });
-
-     showMintWidget();
  }
 
  function setupMintWidget() {
-     const mintAmountText = document.querySelector('[data-id="nft-mint-amount-text"]');
+     document.querySelector('.mint-content').innerHTML = ` <div id="nft-mint-amount-input-container">
+        <svg id="nft-mint-amount-plus"  xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" viewBox="0 0 490 490" style="enable-background:new 0 0 490 490;" xml:space="preserve"> <g> <path d="M52.8,311.3c-12.8-12.8-12.8-33.4,0-46.2c6.4-6.4,14.7-9.6,23.1-9.6s16.7,3.2,23.1,9.6l113.4,113.4V32.7   c0-18,14.6-32.7,32.7-32.7c18,0,32.7,14.6,32.7,32.7v345.8L391,265.1c12.8-12.8,33.4-12.8,46.2,0c12.8,12.8,12.8,33.4,0,46.2   L268.1,480.4c-6.1,6.1-14.4,9.6-23.1,9.6c-8.7,0-17-3.4-23.1-9.6L52.8,311.3z"/> </g> <g> </g> <g> </g> <g> </g> <g> </g> <g> </g> <g> </g> <g> </g> <g> </g> <g> </g> <g> </g> <g> </g> <g> </g> <g> </g> <g> </g> <g> </g> </svg>
+        <svg id="nft-mint-amount-minus" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" viewBox="0 0 490 490" style="enable-background:new 0 0 490 490;" xml:space="preserve"> <g> <path d="M52.8,311.3c-12.8-12.8-12.8-33.4,0-46.2c6.4-6.4,14.7-9.6,23.1-9.6s16.7,3.2,23.1,9.6l113.4,113.4V32.7   c0-18,14.6-32.7,32.7-32.7c18,0,32.7,14.6,32.7,32.7v345.8L391,265.1c12.8-12.8,33.4-12.8,46.2,0c12.8,12.8,12.8,33.4,0,46.2   L268.1,480.4c-6.1,6.1-14.4,9.6-23.1,9.6c-8.7,0-17-3.4-23.1-9.6L52.8,311.3z"/> </g> <g> </g> <g> </g> <g> </g> <g> </g> <g> </g> <g> </g> <g> </g> <g> </g> <g> </g> <g> </g> <g> </g> <g> </g> <g> </g> <g> </g> <g> </g> </svg>
+        <div id="nft-mint-amount-text">1</div>
+     </div>
+     <button id="nft-mint-button">Mint</button>
+     `
 
-     document.querySelector('[data-id="nft-mint-amount-minus"]').addEventListener('click', ev => {
+     document.querySelector('#nft-mint-amount-minus').addEventListener('click', ev => {
          ev.preventDefault();
          setMintAmount(getMintAmount() - 1);
      });
 
-     document.querySelector('[data-id="nft-mint-amount-plus"]').addEventListener('click', ev => {
+     document.querySelector('#nft-mint-amount-plus').addEventListener('click', ev => {
          ev.preventDefault();
          setMintAmount(getMintAmount() + 1);
      });
@@ -489,7 +511,7 @@ function displayLoadingModal(msg, { showLoading = true, showX = true } = {}) {
  function setupConnectWalletButtonText() {
      let firstConnect = true;
      setInterval(async function updateConnectButton() {
-         const button = document.querySelector('[data-id="nft-connect-wallet-button-text"]');
+         const button = document.querySelector('#nft-connect-wallet-button-text');
          const addr = getAddress();
          if (button && addr && getChainId() == config.networkParams.chainId) {
              const cropped = addr.slice(0, 5) + '...' + addr.slice(-5);
@@ -510,24 +532,22 @@ function displayLoadingModal(msg, { showLoading = true, showX = true } = {}) {
      // document.querySelector('[data-id="nft-connect-wallet-button-center"]').parentElement.style.display = 'none';
      // document.querySelector('[data-id="nft-connect-wallet-button-center-text"]').style.display = 'none';
      // document.querySelectorAll('[data-id^="nft-mint"]').forEach(e => e.style.opacity = '1');
-     $('[data-id="nft-connect-wallet-button-center"]').parent().hide();
-     $('[data-id^="nft-mint"]').show();
-     $('[data-id="nft-mint-button"]').show();
+     $('.connect-wallet-btn').hide();
+     $('.mint-content').show();
  }
 
  function hideMintWidget() {
-     $('[data-id^="nft-mint"]').hide();
+     $('.mint-content').hide();
  }
 
  function hideUI() {
      // document.querySelector('[data-id="nft-connect-wallet-button-center"]').parentElement.style.display = 'table';
      // document.querySelectorAll('[data-id^="nft-mint"]').forEach(e => e.style.opacity = '0');
-     $('[data-id="nft-connect-wallet-button-center"]').parent().show();
-     $('[data-id^="nft-mint"]').hide();
+     $('.mint-content').hide();
  }
 
  function setupConnectWalletButtons() {
-     document.querySelectorAll('[data-id="nft-connect-wallet-button-center"], [data-id="nft-connect-wallet-button-text"]').forEach(el => {
+     document.querySelectorAll('.connect-wallet-btn').forEach(el => {
          el.addEventListener('click', ev => {
              ev.preventDefault();
              connectButtonOnClick();
@@ -565,7 +585,15 @@ function displayLoadingModal(msg, { showLoading = true, showX = true } = {}) {
         </div>
     `);
 
-     mintContainer.appendChild(elFromHtml`
+    mintContainer.innerHTML = "";
+
+    mintContainer.appendChild(elFromHtml`
+        <button class="connect-wallet-btn">
+            Connect Wallet!
+        </button>
+    `)
+
+    mintContainer.appendChild(elFromHtml`
         <div class="mint-content">
         </div>
     `);
@@ -574,17 +602,9 @@ function displayLoadingModal(msg, { showLoading = true, showX = true } = {}) {
      var style = document.createElement( 'style' )
      style.innerHTML = 'button { width: 100%; }'
 
-
-     // $('[href^="#nft"]').each((i, el) => {
-     //     $(el).attr('data-id', $(el).attr('href').replace('#', ''));
-     //     $(el).attr('href', null);
-     // });
-
-     //document.querySelector('[data-id="nft-message-box"]').style.display = 'none';
-     //hideUI();
-     //setupMintWidget();
-     //setupConnectWalletButtons();
-     //setupConnectWalletButtonText();
+     hideUI();
+     setupConnectWalletButtons();
+     setupMintWidget();
  });
 
  async function chooseWallet() {
