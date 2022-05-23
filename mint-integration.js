@@ -337,7 +337,7 @@ function displayLoadingModal(msg, { showLoading = true, showX = true } = {}) {
          return alert(
              `Not enough balance. You need ${ethers.utils.formatEther(
                  requiredAmount
-             )} MATIC to mint ${mintAmount} NFT${mintAmount > 1 ? 's' : ''}.`
+             )} ETH to mint ${mintAmount} NFT${mintAmount > 1 ? 's' : ''}.`
          );
      }
 
@@ -359,7 +359,7 @@ function displayLoadingModal(msg, { showLoading = true, showX = true } = {}) {
    <br>
    Transaction hash: <br> ${txHash}
    <br>
-   <a target="_blank" href="${config.explorerUrl}${txHash}">View on PolygonScan</a>
+   <a target="_blank" href="${config.explorerUrl}${txHash}">View on EtherScan</a>
  `, { showX: false });
      // const tx = await provider.getTransaction(txHash);
      // const txReceipt = await tx.wait();
@@ -370,7 +370,7 @@ function displayLoadingModal(msg, { showLoading = true, showX = true } = {}) {
        <br>
        Transaction hash: ${txHash}
        <br>
-       <a target="_blank" href="${config.explorerUrl}${txHash}">View on PolygonScan</a>
+       <a target="_blank" href="${config.explorerUrl}${txHash}">View on EtherScan</a>
        <br>
        <a target="_blank" href="${config.openSeaUrl}">
          View your NFTs on OpenSea
