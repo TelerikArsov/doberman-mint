@@ -101,7 +101,7 @@
 }
 
 #nft-mint-amount-text::selection {
-    background: white;
+    background: transparent;
     color: black;
 }
 
