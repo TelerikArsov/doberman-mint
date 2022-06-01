@@ -11,8 +11,8 @@ const networks = {
         },
     },
     rinkeby: {
-        contractAddress: '0x8eB3be9d0E946236be87e72260D55b7Ee1606304',
-        networkName: 'Ethereum Mainnet',
+        contractAddress: '0x2843B2A8Ff20CCc11d42AD650D4F058b2E476738',
+        networkName: 'Rinkeby Testnet',
         etherScanUrl: 'https://rinkeby.etherscan.io/tx/',
         openSeaUrl: 'https://testnets.opensea.io/account',
         networkParams: {
