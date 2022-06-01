@@ -289,7 +289,7 @@ function displayMessage(context, message) {
         modal.classList.add('open');
         const modalContainer = modal.querySelector('.nft-modal-container');
         modalContainer.innerHTML = `
-         <div class="nft-modal-close nft-js-modal-close">✕</div>
+         <div class="nft-modal-close nft-js-modal-close">X</div>
          <div class="nft-modal-content">
             ${message}
         </div>
@@ -311,7 +311,7 @@ function displayLoadingModal(msg, { showLoading = true, showX = true } = {}) {
     const modalContainer = modal.querySelector('.nft-modal-container');
 
     modalContainer.innerHTML = `
- ${showX ? '<div class="nft-modal-close nft-js-modal-close">✕</div>' : ''}
+ ${showX ? '<div class="nft-modal-close nft-js-modal-close">X</div>' : ''}
    <div class="nft-modal-content">
      ${msg}
    <br>
@@ -620,8 +620,8 @@ function displayLoadingModal(msg, { showLoading = true, showX = true } = {}) {
 
      modalContainer.innerHTML = `
    <div class="nft-modal-header">
-     <div class="nft-modal-title">Choose a wallet</div>
-     <div class="nft-modal-close nft-js-modal-close">✕</div>
+     <div class="nft-modal-title" id="choose-wallet-title">Choose a wallet</div>
+     <div class="nft-modal-close nft-js-modal-close">X</div>
    </div>
    <div class="nft-modal-content" style="margin-left:0;margin-right:0;padding-left:0;padding-right:0">
      <div class="nft-modal-wallet-selector">    

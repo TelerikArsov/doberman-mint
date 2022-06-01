@@ -58,15 +58,15 @@
     padding-right: 3%;
     vertical-align: top;
     display: inline-block;
-    border: 1px solid #ccc;
-    /* border-radius: 5px; */
+    border-radius: 5px;
     cursor: pointer;
     margin-top: 2px;
     margin-bottom: 2px;
+    background-color: #0c0d12;
 }
 
 .wallet-alternative:hover {
-    background-color: #f5f5f5;
+    background-color: #3C3E46;
 }
 
 .wallet-alternative img {
@@ -77,11 +77,16 @@
     display: inline;
 }
 
+#choose-wallet-title {
+    color: #fff;
+}
+
 .wallet-alternative .wallet-alternative-name {
     font-size: 1.2rem;
     font-weight: bold;
     vertical-align: bottom;
-    display: inline
+    display: inline;
+    color: #fff;
 }
 
 #nft-mint-amount-text {
@@ -199,7 +204,6 @@
     padding-right: 30px;
     font-size: 2em;
     font-weight: bold;
-    border-bottom: 1px solid #ccc;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -233,7 +237,7 @@
     outline: none;
     background: none;
     font-size: 20px;
-    color: #747474;
+    color: #fff;
 }
 
 .nft-modal-content .nft-modal-close {
@@ -253,11 +257,11 @@
     max-width: 700px;
     top: 35%;
     transform: translateY(-50%);
-    box-shadow: 0 0 10px #fff;
+    box-shadow: 0 0 10px #171923;
     margin: 0 auto;
-    background-color: #fff;
+    background-color: #171923;
     text-align: center;
-    /* border-radius: 10px; */
+    border-radius: 10px;
 }
 
 .nft-modal-stage-loading {
